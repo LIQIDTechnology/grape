@@ -13,7 +13,8 @@ module Grape
           @errors[validation_error.params] ||= []
           @errors[validation_error.params] << validation_error
         end
-        super message: full_messages.join(', '), status: 400
+
+        super message: full_messages.join(', '), status: 400, headers: args[:headers]
       end
 
       def each
@@ -37,11 +38,11 @@ module Grape
         as_json.to_json
       end
 
-      private
-
       def full_messages
         map { |attributes, error| full_message(attributes, error) }.uniq
       end
+
+      private
 
       def full_message(attributes, error)
         I18n.t(

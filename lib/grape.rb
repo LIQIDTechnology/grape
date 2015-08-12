@@ -13,7 +13,9 @@ require 'active_support/ordered_hash'
 require 'active_support/core_ext/object/conversions'
 require 'active_support/core_ext/array/extract_options'
 require 'active_support/core_ext/hash/deep_merge'
+require 'active_support/core_ext/hash/except'
 require 'active_support/dependencies/autoload'
+require 'active_support/notifications'
 require 'multi_json'
 require 'multi_xml'
 require 'virtus'
@@ -122,6 +124,7 @@ module Grape
     autoload :StackableValues
     autoload :InheritableSetting
     autoload :StrictHashConfiguration
+    autoload :FileResponse
   end
 
   module DSL

@@ -1,10 +1,10 @@
 ![grape logo](grape.png)
 
 [![Gem Version](http://img.shields.io/gem/v/grape.svg)](http://badge.fury.io/rb/grape)
-[![Build Status](http://img.shields.io/travis/intridea/grape.svg)](https://travis-ci.org/intridea/grape)
-[![Dependency Status](https://gemnasium.com/intridea/grape.svg)](https://gemnasium.com/intridea/grape)
-[![Code Climate](https://codeclimate.com/github/intridea/grape.svg)](https://codeclimate.com/github/intridea/grape)
-[![Inline docs](http://inch-ci.org/github/intridea/grape.svg)](http://inch-ci.org/github/intridea/grape)
+[![Build Status](http://img.shields.io/travis/ruby-grape/grape.svg)](https://travis-ci.org/ruby-grape/grape)
+[![Dependency Status](https://gemnasium.com/ruby-grape/grape.svg)](https://gemnasium.com/ruby-grape/grape)
+[![Code Climate](https://codeclimate.com/github/ruby-grape/grape.svg)](https://codeclimate.com/github/ruby-grape/grape)
+[![Inline docs](http://inch-ci.org/github/ruby-grape/grape.svg)](http://inch-ci.org/github/ruby-grape/grape)
 
 ## Table of Contents
 
@@ -79,6 +79,8 @@
   - [Reloading in Rack Applications](#reloading-in-rack-applications)
   - [Reloading in Rails Applications](#reloading-in-rails-applications)
 - [Performance Monitoring](#performance-monitoring)
+  - [Active Support Instrumentation](#active-support-instrumentation)
+  - [Monitoring Products](#monitoring-products)
 - [Contributing to Grape](#contributing-to-grape)
 - [Hacking on Grape](#hacking-on-grape)
 - [License](#license)
@@ -94,14 +96,14 @@ content negotiation, versioning and much more.
 
 ## Stable Release
 
-You're reading the documentation for the next release of Grape, which should be 0.12.1.
+You're reading the documentation for the next release of Grape, which should be 0.13.1.
 Please read [UPGRADING](UPGRADING.md) when upgrading from a previous version.
-The current stable release is [0.12.0](https://github.com/intridea/grape/blob/v0.12.0/README.md).
+The current stable release is [0.13.0](https://github.com/ruby-grape/grape/blob/v0.13.0/README.md).
 
 ## Project Resources
 
+* [Grape Website](http://www.ruby-grape.org)
 * Need help? [Grape Google Group](http://groups.google.com/group/ruby-grape)
-* [Grape Wiki](https://github.com/intridea/grape/wiki)
 
 ## Installation
 
@@ -1102,6 +1104,16 @@ subject.rescue_from Grape::Exceptions::ValidationErrors do |e|
 end
 ```
 
+`Grape::Exceptions::ValidationErrors#full_messages` returns the validation messages as an array. `Grape::Exceptions::ValidationErrors#message` joins the messages to one string.
+
+For responding with an array of validation messages, you can use `Grape::Exceptions::ValidationErrors#full_messages`.
+```ruby
+format :json
+subject.rescue_from Grape::Exceptions::ValidationErrors do |e|
+  error!({ messages: e.full_messages }, 400)
+end
+```
+
 ### I18n
 
 Grape supports I18n for parameter-related error messages, but will fallback to English if
@@ -1411,7 +1423,7 @@ instead of a message.
 error!({ error: "unexpected error", detail: "missing widget" }, 500)
 ```
 
-You can present documented errors with a Grape entity using the the [grape-entity](https://github.com/intridea/grape-entity) gem.
+You can present documented errors with a Grape entity using the the [grape-entity](https://github.com/ruby-grape/grape-entity) gem.
 
 ```ruby
 module API
@@ -1932,8 +1944,8 @@ hash may include `:with`, which defines the entity to expose.
 
 ### Grape Entities
 
-Add the [grape-entity](https://github.com/intridea/grape-entity) gem to your Gemfile.
-Please refer to the [grape-entity documentation](https://github.com/intridea/grape-entity/blob/master/README.md)
+Add the [grape-entity](https://github.com/ruby-grape/grape-entity) gem to your Gemfile.
+Please refer to the [grape-entity documentation](https://github.com/ruby-grape/grape-entity/blob/master/README.md)
 for more details.
 
 The following example exposes statuses.
@@ -2095,6 +2107,8 @@ end
 Use `body false` to return `204 No Content` without any data or content-type.
 
 You can also set the response to a file-like object with `file`.
+Note: Rack will read your entire Enumerable before returning a response. If
+you would like to stream the response, see `stream`.
 
 ```ruby
 class FileStreamer
@@ -2112,6 +2126,16 @@ end
 class API < Grape::API
   get '/' do
     file FileStreamer.new('file.bin')
+  end
+end
+```
+
+If you want a file-like object to be streamed using Rack::Chunked, use `stream`.
+
+```ruby
+class API < Grape::API
+  get '/' do
+    stream FileStreamer.new('file.bin')
   end
 end
 ```
@@ -2606,6 +2630,34 @@ See [StackOverflow #3282655](http://stackoverflow.com/questions/3282655/ruby-on-
 
 ## Performance Monitoring
 
+### Active Support Instrumentation
+
+Grape has built-in support for [ActiveSupport::Notifications](http://api.rubyonrails.org/classes/ActiveSupport/Notifications.html) which provides simple hook points to instrument key parts of your application.
+
+The following are currently supported:
+
+#### endpoint_run.grape
+
+The main execution of an endpoint, includes filters and rendering.
+
+* *endpoint* - The endpoint instance
+
+#### endpoint_render.grape
+
+The execution of the main content block of the endpoint.
+
+* *endpoint* - The endpoint instance
+
+#### endpoint_run_filters.grape
+
+* *endpoint* - The endpoint instance
+* *filters* - The filters being executed
+* *type* - The type of filters (before, before_validation, after_validation, after)
+
+See the [ActiveSupport::Notifications documentation](http://api.rubyonrails.org/classes/ActiveSupport/Notifications.html] for information on how to subscribe to these events.
+
+### Monitoring Products
+
 Grape integrates with NewRelic via the
 [newrelic-grape](https://github.com/flyerhzm/newrelic-grape) gem, and
 with Librato Metrics with the [grape-librato](https://github.com/seanmoon/grape-librato) gem.
@@ -2622,7 +2674,7 @@ See [CONTRIBUTING](CONTRIBUTING.md).
 You can start hacking on Grape on
 [Nitrous.IO](https://www.nitrous.io/?utm_source=github.com&utm_campaign=grape&utm_medium=hackonnitrous) in a matter of seconds:
 
-[![Hack intridea/grape on Nitrous.IO](https://d3o0mnbgv6k92a.cloudfront.net/assets/hack-l-v1-3cc067e71372f6045e1949af9d96095b.png)](https://www.nitrous.io/hack_button?source=embed&runtime=rails&repo=intridea%2Fgrape&file_to_open=README.md)
+[![Hack ruby-grape/grape on Nitrous.IO](https://d3o0mnbgv6k92a.cloudfront.net/assets/hack-l-v1-3cc067e71372f6045e1949af9d96095b.png)](https://www.nitrous.io/hack_button?source=embed&runtime=rails&repo=intridea%2Fgrape&file_to_open=README.md)
 
 ## License
 

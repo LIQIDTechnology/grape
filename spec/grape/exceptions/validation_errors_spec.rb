@@ -5,6 +5,22 @@ describe Grape::Exceptions::ValidationErrors do
   let(:validation_message) { 'FooBar is invalid' }
   let(:validation_error) { OpenStruct.new(params: [validation_message]) }
 
+  context 'initialize' do
+    let(:headers) {
+      {
+        'A-Header-Key' => 'A-Header-Value'
+      }
+    }
+
+    subject do
+      described_class.new(errors: [validation_error], headers: headers)
+    end
+
+    it 'should assign headers through base class' do
+      expect(subject.headers).to eq(headers)
+    end
+  end
+
   context 'message' do
     context 'is not repeated' do
       let(:error) do
@@ -14,6 +30,18 @@ describe Grape::Exceptions::ValidationErrors do
 
       it { expect(message).to include validation_message }
       it { expect(message.size).to eq 1 }
+    end
+  end
+
+  describe '#full_messages' do
+    context 'with errors' do
+      let(:validation_error_1) { Grape::Exceptions::Validation.new(params: ['id'], message_key: 'presence') }
+      let(:validation_error_2) { Grape::Exceptions::Validation.new(params: ['name'], message_key: 'presence') }
+      subject { described_class.new(errors: [validation_error_1, validation_error_2]).full_messages }
+
+      it 'returns an array with each errors full message' do
+        expect(subject).to contain_exactly('id is missing', 'name is missing')
+      end
     end
   end
 
